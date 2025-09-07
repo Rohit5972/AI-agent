@@ -13,9 +13,12 @@ def get_files_info(working_directory, directory="."):
     lines = []
 
     for name in os.listdir(full_path):
-        path = os.path.join(full_path,name)
-        size = os.path.getsize(path)
-        is_dir = os.path.isdir(path)
-        lines.append(f"- {name}: file_size={size} bytes, is_dir={is_dir}")
+        try:
+            path = os.path.join(full_path,name)
+            size = os.path.getsize(path)
+            is_dir = os.path.isdir(path)
+            lines.append(f"- {name}: file_size={size} bytes, is_dir={is_dir}")
+        except Exception as e:
+            return f"Error: {str(e)}"
 
     return "\n".join(lines)
