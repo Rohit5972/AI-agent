@@ -99,31 +99,38 @@ When a user asks a question or makes a request, make a function call plan. You c
 
 All paths you provide should be relative to the working directory. You do not need to specify the working directory in your function calls as it is automatically injected for security reasons.
 """
-    messages = [types.Content(role="user", parts=[types.Part(text=prompt)]),]
-    response = client.models.generate_content(
-    model='gemini-2.0-flash-001', contents=messages,config=types.GenerateContentConfig(tools=[available_functions],system_instruction=system_instructions),
-    )
+    for _ in range(20):
+        messages = [types.Content(role="user", parts=[types.Part(text=prompt)]),]
+        response = client.models.generate_content(
+        model='gemini-2.0-flash-001', contents=messages,config=types.GenerateContentConfig(tools=[available_functions],system_instruction=system_instructions),
+        )
 
 
     
+    
+        if "--verbose" in sys.argv[1:]:
 
-    if "--verbose" in sys.argv[1:]:
+            print(f"User prompt: {prompt}")
+            print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
+            print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
 
-        print(f"User prompt: {prompt}")
-        print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
-        print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
+        messages.append(response.candidates[0].content)
 
+        if response.candidates[0].content.parts[0].text:
+            print("Final response:")
+            print(response.candidates[0].content.parts[0].text)
+            break
 
-    if response.candidates[0].content.parts[0].function_call:
-        function_call_part = response.candidates[0].content.parts[0].function_call
-        result_content = call_function(
-        function_call_part,
-        verbose="--verbose" in sys.argv[1:]
-    )
-
-        print(result_content.parts[0].function_response.response["result"])
-    else:
-        print(response.text)
+        if response.candidates[0].content.parts[0].function_call:
+            function_call_part = response.candidates[0].content.parts[0].function_call
+            result_content = call_function(
+            function_call_part,
+            verbose="--verbose" in sys.argv[1:]
+        )
+            messages.append(result_content)
+            print(result_content.parts[0].function_response.response["result"])
+        else:
+            print(response.text)
 
     
 
